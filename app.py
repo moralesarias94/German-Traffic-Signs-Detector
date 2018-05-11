@@ -1,6 +1,10 @@
 import click
 import requests, zipfile, io, os
 
+#Helper functions
+def load_images(path):
+    pass
+
 
 @click.group()
 def cli():
