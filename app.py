@@ -1,9 +1,34 @@
 import click
 import requests, zipfile, io, os
+from sklearn.externals import joblib
+from sklearn.cluster import KMeans
+import numpy as np
+import cv2
 
 #Helper functions
-def load_images(path):
-    pass
+def transform_image(path):
+    """Carga la imagen, la convierte en escala de grises, hace la extracción de los features (El arreglo completo con los features)
+    """
+    img = cv2.imread('./sub_set_images/000%s.ppm' %img_path)
+    gray= cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    kp, des = sift.detectAndCompute(gray,None)
+    if(len(kp) == 0):
+        des = []
+    return des
+    
+def create_cluster(images, k):
+    """Crea el cluster de K features con los features de todas las imagenes."""
+    kmeans = KMeans(n_clusters=k, random_state=0).fit(images)
+    return kmeans
+
+def encode_features(image_features, clusters):
+    """Recibe la imagen y crea el histograma"""
+    histogram = np.array(clusters.cluster_centers_.shape[0])
+    for feature in image_features:
+        histogram[clusters.predict(feature)] += 1
+    return histogram
+    
+
 
 
 @click.group()
