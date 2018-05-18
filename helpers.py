@@ -14,7 +14,7 @@ import requests, zipfile, io, os
 from sklearn.externals import joblib
 from sklearn.utils import shuffle
 
-
+path_to_root = os.path.dirname(os.path.abspath(__file__))
 #Map for displaying class names.
 infer_map = {
 0 : 'speed limit 20 (prohibitory)',
@@ -69,6 +69,7 @@ def read_transform_all_images(path, infer=False):
     Read the images, transform them into a list of keypoint descriptors. Returns a list with a row per image with
     it's descriptors. Also returns a list with the label of each row and the image names. 
     """
+    path = os.path.join(path_to_root, path)
     img_names = os.listdir(path)
     transformed_images = []
     img_classes = []
@@ -136,24 +137,24 @@ def get_train_samples(train_features, kmeans, model='model1'):
     """Calculates the idf of the features and returns the samples created multiplied with the idf."""
     train_samples = pd.DataFrame(create_samples(train_features, kmeans))
     idf = pd.DataFrame(train_samples.apply(lambda x: np.log(len(train_samples)/len(x[x>0])), axis=0).values, columns=['idf'])
-    idf.to_csv('./idf%s.txt' % model, index=False)
+    idf.to_csv(os.path.join(path_to_root, 'models/aux/idf%s.txt' % model), index=False)
     train_samples = train_samples * idf['idf']
     return train_samples
 
 def get_test_samples(test_features, kmeans, model='model1'):
     """Loads the idf of the features and returns the samples created multiplied with the idf."""
     test_samples = pd.DataFrame(create_samples(test_features, kmeans))
-    idf = pd.read_csv('./idf%s.txt' % model, header=0)
+    idf = pd.read_csv(os.path.join(path_to_root, 'models/aux/idf%s.txt' % model), header=0)
     if(len(idf) == len(kmeans.cluster_centers_)):
         test_samples = test_samples * idf['idf']
     else:
         print("There is a problem with the amount of features (#clusters in kmeans model) and idf lenght. Run train again.")
     return test_samples
 
-def show_predictions(preds, dir, img_names):
+def show_predictions(preds, d, img_names):
     """Creates a window for each image and the predicted label for them."""
     for pred, img_name in zip(preds, img_names):
-        img_path = os.path.join(dir, img_name)
+        img_path = os.path.join(os.path.join(path_to_root,d), img_name)
         img = cv2.imread(img_path)
         plt.axis("off")
         plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
@@ -169,13 +170,14 @@ def random_batch(X_train, y_train, batch_size):
 
 def get_images(path, infer=False):
     """Get BGR images with its classes and the names of them. Also resize all images to 28x28x3."""
+    path = os.path.join(path_to_root, path)
     img_names = os.listdir(path)
     images = []
     img_classes = []
     transformed_image_names = []
     count_images = 0
     for img_name in img_names:
-        if (not img_name.startswith('.') and os.path.isfile(os.path.join(path, img_name))):
+        if (not (img_name.startswith('.')) and os.path.isfile(os.path.join(path, img_name))):
             count_images += 1
             img_path = os.path.join(path, img_name)
             img = cv2.imread(img_path)

@@ -1,2 +1,4 @@
 # German-Traffic-Signs-Detector
 Kiwi Campus Deep Learning challenge
+
+##This project contains 3 different models performing  a classification task on data from the German-traffic-... You can clone this repository and run pip install requirements.txt. To run training in any model type python app.py train and pass the model name as an option -m and the relative path to the directory where images are stored -d. e.g python app.py train -m model1 -d ./images/train. To test the models just run python app.py test with the same options. To see the how the model performs in your own data just add images to the ./images/user folder and run python app.py infer with the model's name and ./images/user.

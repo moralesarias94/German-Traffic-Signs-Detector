@@ -1,2 +1,2 @@
-model_checkpoint_path: "model2.ckpt"
-all_model_checkpoint_paths: "model2.ckpt"
+model_checkpoint_path: "/Users/juandanielmorales/Desktop/Kiwi2/German-Traffic-Signs-Detector/models/model2/saved/model2.ckpt"
+all_model_checkpoint_paths: "/Users/juandanielmorales/Desktop/Kiwi2/German-Traffic-Signs-Detector/models/model2/saved/model2.ckpt"

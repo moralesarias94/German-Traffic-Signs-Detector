@@ -1,3 +1,4 @@
+import sys
 from helpers import *
 from tensorflow.contrib.layers import flatten
 
@@ -9,36 +10,37 @@ def lr_model(k, c, d, kmeans=None):
     print('Creating kmeans for feature detection.')
     if(not kmeans):
         kmeans = create_cluster(np.concatenate(train_features), k)
-        joblib.dump(kmeans, './models/aux/kmeans.sav')
+        joblib.dump(kmeans, os.path.join(path_to_root, 'models/aux/kmeans.sav'))
 
     train_samples = get_train_samples(train_features, kmeans, 'model1')
     lr = LogisticRegression(penalty='l2', C=c)
     lr.fit(train_samples, train_classes)
     train_score = lr.score(train_samples, train_classes)
-    print("Training precision: %s " %train_score)
+    print("Training accuracy: %s " %train_score)
     #Save the model
-    filename = './models/%s/saved/model.sav' % ('model1')
+    filename = os.path.join(path_to_root, 'models/%s/saved/model.sav' % ('model1'))
     joblib.dump(lr, filename)
     return train_score
 
 def lr_model_test(d, m='model1'):
-        test_features, test_classes, test_transformed_image_names = read_transform_all_images(d, False)
-        try:
-            kmeans = joblib.load('./models/aux/kmeans.sav')
-        except Exception as e:
-            print("Could not load Kmeans model. Train first or verify model's name.")
-            print(e)
-            return
-        try:
-            lr = joblib.load('./models/%s/saved/model.sav' % (m))
-        except:
-            print("Could not load sklearn logistic regression model. Train first or verify model's name.")
-            return
-        test_samples = get_test_samples(test_features, kmeans, m)
+    """Loads both the kmeans model and the linear regression and predict the labels of the images contained in d directory"""
+    test_features, test_classes, test_transformed_image_names = read_transform_all_images(d, False)
+    try:
+        kmeans = joblib.load(os.path.join(path_to_root, 'models/aux/kmeans.sav'))
+    except Exception as e:
+        print("Could not load Kmeans model. Train first or verify model's name.")
+        print(e)
+        return
+    try:
+        lr = joblib.load(os.path.join(path_to_root, 'models/%s/saved/model.sav' % (m)))
+    except:
+        print("Could not load sklearn logistic regression model. Train first or verify model's name.")
+        return
+    test_samples = get_test_samples(test_features, kmeans, m)
 
-        test_score = lr.score(test_samples, test_classes)
-        print("Testing precision: %s" % test_score)
-        return test_score
+    test_score = lr.score(test_samples, test_classes)
+    print("Testing accuracy: %s" % test_score)
+    return test_score, lr.predict(test_samples)
 
 
 def tf_lr_model(k, d, learning_rate = 0.001, training_iteration = 150, batch_size = 50, early_stopping = 0.001, display_step = 2, kmeans=None):
@@ -49,7 +51,7 @@ def tf_lr_model(k, d, learning_rate = 0.001, training_iteration = 150, batch_siz
 
     if(not kmeans):
         kmeans = create_cluster(np.concatenate(train_features), k)
-        joblib.dump(kmeans, './models/aux/kmeans_tf.sav')
+        joblib.dump(kmeans, os.path.join(path_to_root, 'models/aux/kmeans_tf.sav'))
 
     features = get_train_samples(train_features, kmeans, 'model2').values
     enc = OneHotEncoder(43)
@@ -105,57 +107,59 @@ def tf_lr_model(k, d, learning_rate = 0.001, training_iteration = 150, batch_siz
         predictions = tf.equal(tf.argmax(model, 1), tf.argmax(y, 1))
         # Save the model
         saver = tf.train.Saver()
-        save_path = saver.save(sess, "./models/model2/saved/model2.ckpt")
+        save_path = saver.save(sess, os.path.join(path_to_root, "models/model2/saved/model2.ckpt"))
         
         # Calculate accuracy on training set
         accuracy = tf.reduce_mean(tf.cast(predictions, "float"))
         acc = accuracy.eval({x: features, y: labels})
-        print("Training precision:" , acc)
+        print("Training accuracy:" , acc)
         return acc
 
 def tf_lr_test(d, m='model2'):
-        #Load features from images and kmeans model
-        test_features, test_classes, test_transformed_image_names = read_transform_all_images(d, False)
+    """Loads both the kmeans model and the softmax model and predict the labels of the images contained in d directory"""
+  
+    #Load features from images and kmeans model
+    test_features, test_classes, test_transformed_image_names = read_transform_all_images(d, False)
+    try:
+        kmeans = joblib.load(os.path.join(path_to_root, 'models/aux/kmeans_tf.sav'))
+    except:
+        print("Could not load Kmeans model. Train first or verify model's name.")
+        return
+
+    features = get_test_samples(test_features, kmeans, m).values
+    n_samples, n_features = features.shape
+    #Encode the labels, TODO: get #classes.
+    enc = OneHotEncoder(43)
+    labels = enc.fit_transform(test_classes.reshape(-1, 1)).todense()
+    _, n_classes = labels.shape
+
+    tf.reset_default_graph()
+
+    # TF input
+    x = tf.placeholder("float", [None, n_features]) # Based on Kmeans, there are inputs are of shape k
+    y = tf.placeholder("float", [None, n_classes]) # 43 classes.
+
+    # Define variables to restore
+    W = tf.Variable(tf.zeros([n_features, n_classes]))
+    b = tf.Variable(tf.zeros([n_classes]))
+    saver = tf.train.Saver()
+
+    with tf.Session() as sess:
+        model = tf.nn.softmax(tf.matmul(x, W) + b) # Softmax
+        predictions = tf.equal(tf.argmax(model, 1), tf.argmax(y, 1))
+        #Calculate correct predictions, get mean value for accuracy.
+        accuracy = tf.reduce_mean(tf.cast(predictions, "float"))
         try:
-            kmeans = joblib.load('./models/aux/kmeans_tf.sav')
-        except:
-            print("Could not load Kmeans model. Train first or verify model's name.")
+            #Restore the model
+            saver.restore(sess, os.path.join(path_to_root, "models/%s/saved/%s.ckpt" %(m, m)))
+            #Eval accuracy
+            acc = accuracy.eval({x: features, y: labels})
+            print ("Testing accuracy:", acc)
+            return acc, tf.argmax(model, 1).eval({x: features})
+        except Exception as e: 
+            print('Error using %s. Train first.' %m)
+            print(e)
             return
-
-        features = get_test_samples(test_features, kmeans, m).values
-        n_samples, n_features = features.shape
-        #Encode the labels, TODO: get #classes.
-        enc = OneHotEncoder(43)
-        labels = enc.fit_transform(test_classes.reshape(-1, 1)).todense()
-        _, n_classes = labels.shape
-
-        tf.reset_default_graph()
-
-        # TF input
-        x = tf.placeholder("float", [None, n_features]) # Based on Kmeans, there are inputs are of shape k
-        y = tf.placeholder("float", [None, n_classes]) # 43 classes.
-
-        # Define variables to restore
-        W = tf.Variable(tf.zeros([n_features, n_classes]))
-        b = tf.Variable(tf.zeros([n_classes]))
-        saver = tf.train.Saver()
-
-        with tf.Session() as sess:
-            model = tf.nn.softmax(tf.matmul(x, W) + b) # Softmax
-            predictions = tf.equal(tf.argmax(model, 1), tf.argmax(y, 1))
-            #Calculate correct predictions, get mean value for precision.
-            accuracy = tf.reduce_mean(tf.cast(predictions, "float"))
-            try:
-                #Restore the model
-                saver.restore(sess, "./models/%s/saved/%s.ckpt" %(m, m))
-                #Eval accuracy
-                acc = accuracy.eval({x: features, y: labels})
-                print ("Testing precision:", acc)
-                return acc
-            except Exception as e: 
-                print('Error using %s. Train first.' %m)
-                print(e)
-                return
 
 def LeNet_5(x):
     """LeNet architecture. I used tanh non-linearity as the paper states. I made a slight modification to the input
@@ -201,11 +205,11 @@ def LeNet_5(x):
     return logits #return the output of layer 5 to be computed with a softmax activation function.
 
 def tf_lenet_model(x_data, y_data, mode='train', lr=0.001, n_epochs=100, batch_size=60, verbose=True):
-    """Wrapper for the model and also applies softmax to the logits. Trains, tests and use saved model in training for inference."""
+    """Wrapper for the model and also applies softmax to get the logits. Trains, tests and use saved model in training for inference."""
     tf.reset_default_graph()
     x = tf.placeholder(tf.float32, shape=[None,32,32,3])
     y_ = tf.placeholder(tf.float32, shape=[None, 43])
-    logits = LeNet_5(x)
+    logits = LeNet_5(x) #TF model, defines the graph.
     y = tf.nn.softmax(logits) #Softmax output
     
     #Save variables to be restored in the future
@@ -218,7 +222,7 @@ def tf_lenet_model(x_data, y_data, mode='train', lr=0.001, n_epochs=100, batch_s
             #It is supposed to be stochastic gradient descent, AdamOptimizer is similar.
             optimizer = tf.train.AdamOptimizer(learning_rate = lr)
             train = optimizer.minimize(loss)
-            correct_prediction = tf.equal(tf.argmax(logits,1), tf.argmax(y_,1))
+            correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
             accuracy_operation = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
             init = tf.global_variables_initializer()
             sess.run(init)
@@ -242,13 +246,13 @@ def tf_lenet_model(x_data, y_data, mode='train', lr=0.001, n_epochs=100, batch_s
 
             accuracy = sess.run(accuracy_operation, feed_dict={x: x_data, y_: y_data})
             print('Training accuracy: ', accuracy)
-            save_path = saver.save(sess, "./models/model3/saved/model3.ckpt")
+            save_path = saver.save(sess, os.path.join(path_to_root, "models/model3/saved/model3.ckpt"))
             return accuracy
 
         elif(mode == 'test'):
             #Load an existant model and check accuracy
             try: 
-                saver.restore(sess, "./models/model3/saved/model3.ckpt")
+                saver.restore(sess, os.path.join(path_to_root, "models/model3/saved/model3.ckpt"))
             except:
                 print('Error loading model3, try running training first.')
                 return
@@ -260,7 +264,7 @@ def tf_lenet_model(x_data, y_data, mode='train', lr=0.001, n_epochs=100, batch_s
 
         elif(mode == 'infer'):
             try: 
-                saver.restore(sess, "./models/model3/saved/model3.ckpt")
+                saver.restore(sess, os.path.join(path_to_root, "models/model3/saved/model3.ckpt"))
             except:
                 print('Error loading model3, try running training first.')
                 return

@@ -7,15 +7,15 @@ def cli():
 
 @cli.command()
 @click.option('-m', default='model1', help='Model to use e.g model1')
-@click.option('-d', default='./images/train/',
+@click.option('-d', default='images/train/',
               help='Path to directory with trainig data')
 def train(m, d):
-    """Receives a model name e.g model1 and a directory where training data is e.g ./images/train creates samples from
+    """Receives a model name e.g model1 and a directory where training data is e.g images/train creates samples from
         the training data and trains a model with some hyperparameters already tunned.  
     """
     if(m == 'model1'):
         #Throw exception if m or d invalid
-        k = 600; c = 1
+        k = 600; c = 0.1
         print('Training %s with k=%s c=%s' %(m, k, c))        
         lr_model(k, c, d)
         return 
@@ -24,15 +24,15 @@ def train(m, d):
         print('Training %s with k=%s' %(m, k))  
         tf_lr_model(k, d)
     elif(m == 'model3'):
-        imgs, labels, tf_img_names = get_images('./images/train', infer=False)
+        imgs, labels, tf_img_names = get_images('images/train', infer=False)
         imgs, labels = transform_input(imgs, labels, infer=False)
-        tf_lenet_model(imgs, labels, 'train', iterations=10)
+        tf_lenet_model(imgs, labels, 'train', n_epochs=100)
     else:
         print('Incorrect model name. Try model1')
         
 @cli.command()
 @click.option('-m', default='model1', help='Model to use e.g model1')
-@click.option('-d', default='/images/train/',
+@click.option('-d', default='images/train/',
               help='Path to directory with testing data')
 def test(m, d):
     """Call this function with a model's name and a directory with data for testing. It loads the model and perform predictions 
@@ -47,7 +47,7 @@ def test(m, d):
         tf_lr_test(d)
 
     elif(m == 'model3'):
-        imgs, labels, tf_img_names = get_images('./images/test', infer=False)
+        imgs, labels, tf_img_names = get_images('images/test', infer=False)
         imgs, labels = transform_input(imgs, labels, infer=False)
         tf_lenet_model(imgs, labels, 'test')
 
@@ -56,7 +56,7 @@ def test(m, d):
 
 @cli.command()
 @click.option('-m', default='model1', help='Model to use e.g model1')
-@click.option('-d', default='/images/user/',
+@click.option('-d', default='images/user/',
               help='Path to directory with user data')
 def infer(m, d):
     
@@ -64,12 +64,12 @@ def infer(m, d):
     if(m == 'model1'):
         user_features, _, user_transformed_image_names = read_transform_all_images(d, True)
         try:
-            kmeans = joblib.load('./models/aux/kmeans.sav')
+            kmeans = joblib.load(os.path.join(path_to_root,'models/aux/kmeans.sav'))
         except:
             print("Could not load Kmeans model. Train first or verify model's name.")
             return
         try:
-            lr = joblib.load('./models/%s/saved/model.sav' % (m))
+            lr = joblib.load(os.path.join(path_to_root,'models/%s/saved/model.sav' % (m)))
         except:
             print("Could not load sklearn logistic regression model. Train first or verify model's name.")
             return
@@ -77,25 +77,26 @@ def infer(m, d):
         preds = lr.predict(user_samples)
 
     elif(m == 'model2'):
-        user_features, _, user_transformed_image_names = read_transform_all_images('./images/user', True)
+        user_features, _, user_transformed_image_names = read_transform_all_images('images/user', True)
         try:
-            kmeans = joblib.load('./models/aux/kmeans.sav')
+            kmeans = joblib.load(os.path.join(path_to_root,'models/aux/kmeans_tf.sav'))
         except:
             print("Could not load Kmeans model. Train first or verify model's name.")
             return
         #Get samples, convert it from dataframe to numpy ndarray.
+        k = len(kmeans.cluster_centers_)
         user_samples = get_test_samples(user_features, kmeans, m).values
         #Convert labels into OneHot arrays.
 
         tf.reset_default_graph()
         # TF graph input
-        x = tf.placeholder("float", [None, 600]) # Based on Kmeans, there are inputs are of shape k
+        x = tf.placeholder("float", [None, k]) # Based on Kmeans, there are inputs are of shape k
         y = tf.placeholder("float", [None, 43]) # 42 classes.
 
         # Create a model
 
         # Set model weights
-        W = tf.Variable(tf.zeros([600, 43]))
+        W = tf.Variable(tf.zeros([k, 43]))
         b = tf.Variable(tf.zeros([43]))
         saver = tf.train.Saver()
 
@@ -105,7 +106,7 @@ def infer(m, d):
             user_forward = tf.argmax(model, 1)
             try:
                 #Restore the model
-                saver.restore(sess, "./models/model2/model2.ckpt")
+                saver.restore(sess, os.path.join(path_to_root,"models/model2/saved/model2.ckpt"))
                 #Run predictions
                 preds = sess.run(user_forward, feed_dict={x:user_samples})
             except Exception as e:
@@ -128,7 +129,7 @@ def download():
     data_sets_urls = {'test': 'http://benchmark.ini.rub.de/Dataset_GTSDB/TestIJCNN2013.zip',
                     'train': 'http://benchmark.ini.rub.de/Dataset_GTSDB/TrainIJCNN2013.zip',
                     'full': 'http://benchmark.ini.rub.de/Dataset_GTSDB/FullIJCNN2013.zip'}
-    base_output_dir = './images/'
+    base_output_dir = '/images/'
     url = data_sets_urls['full']
     output_full_dir = os.path.join(base_output_dir, 'full')
     full_files = os.listdir(output_full_dir)
