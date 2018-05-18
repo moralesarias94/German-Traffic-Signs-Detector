@@ -180,6 +180,7 @@ def get_images(path, infer=False):
         if (not (img_name.startswith('.')) and os.path.isfile(os.path.join(path, img_name))):
             count_images += 1
             img_path = os.path.join(path, img_name)
+            print(img_path)
             img = cv2.imread(img_path)
             height, width, channels = img.shape
             print(height, width, channels)
