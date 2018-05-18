@@ -26,7 +26,7 @@ def train(m, d):
     elif(m == 'model3'):
         imgs, labels, _ = get_images('images/train', infer=False)
         imgs, labels = transform_input(imgs, labels, infer=False)
-        tf_lenet_model(imgs, labels, 'train', n_epochs=100)
+        tf_lenet_model(imgs, labels, 'train', n_epochs=70, lr=0.0012)
     else:
         print('Incorrect model name. Try model1')
         

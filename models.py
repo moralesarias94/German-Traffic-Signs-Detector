@@ -43,7 +43,7 @@ def lr_model_test(d, m='model1'):
     return test_score, lr.predict(test_samples)
 
 
-def tf_lr_model(k, d, learning_rate = 0.001, training_iteration = 150, batch_size = 50, early_stopping = 0.001, display_step = 2, kmeans=None):
+def tf_lr_model(k, d, learning_rate = 0.001, training_iteration = 100, batch_size = 50, early_stopping = 0.001, display_step = 2, kmeans=None):
     """Tensor flow softmax model for classifying images based on image features detected with SIFT algorithm and kmeans algorithm."""
     # Set parameters
     train_features, train_classes, train_transformed_image_names = read_transform_all_images(d)
