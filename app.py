@@ -24,7 +24,7 @@ def train(m, d):
         print('Training %s with k=%s' %(m, k))  
         tf_lr_model(k, d)
     elif(m == 'model3'):
-        imgs, labels, tf_img_names = get_images('images/train', infer=False)
+        imgs, labels, _ = get_images('images/train', infer=False)
         imgs, labels = transform_input(imgs, labels, infer=False)
         tf_lenet_model(imgs, labels, 'train', n_epochs=100)
     else:
@@ -47,7 +47,7 @@ def test(m, d):
         tf_lr_test(d)
 
     elif(m == 'model3'):
-        imgs, labels, tf_img_names = get_images('images/test', infer=False)
+        imgs, labels, _ = get_images('images/test', infer=False)
         imgs, labels = transform_input(imgs, labels, infer=False)
         tf_lenet_model(imgs, labels, 'test')
 
@@ -153,6 +153,7 @@ def download():
                         done = int(50 * dl / total_length)
                         sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )    
                         sys.stdout.flush()
+                print(' Finished')
     if(len(full_files) == 0):
         print('Unziping images into full folder.')
         zip_data_set = zipfile.ZipFile(file_name, 'r')
