@@ -180,16 +180,17 @@ def get_images(path, infer=False):
         if (not (img_name.startswith('.')) and os.path.isfile(os.path.join(path, img_name))):
             count_images += 1
             img_path = os.path.join(path, img_name)
-            print(img_path)
             img = cv2.imread(img_path)
-            height, width, channels = img.shape
-            print(height, width, channels)
-            max_width_height = 28
-            img = cv2.resize(img, (max_width_height, max_width_height))
-            img = standarize_img(img)
-            images.append(img)
-            img_classes.append(get_class_from_name(img_name, infer))
-            transformed_image_names.append(img_name)
+            if(not (img is None)): 
+                #height, width, channels = img.shape
+                max_width_height = 28
+                img = cv2.resize(img, (max_width_height, max_width_height))
+                img = standarize_img(img)
+                images.append(img)
+                img_classes.append(get_class_from_name(img_name, infer))
+                transformed_image_names.append(img_name)
+            else:
+                print("Could not read %s" % img_path)
     return np.array(images, 'float32'), np.array(img_classes, 'float32'), transformed_image_names
 
 def transform_input(images, labels, infer=False):
