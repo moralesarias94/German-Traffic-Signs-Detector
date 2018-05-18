@@ -181,7 +181,8 @@ def get_images(path, infer=False):
             count_images += 1
             img_path = os.path.join(path, img_name)
             img = cv2.imread(img_path)
-            #height, width, channels = img.shape
+            height, width, channels = img.shape
+            print(height, width, channels)
             max_width_height = 28
             img = cv2.resize(img, (max_width_height, max_width_height))
             img = standarize_img(img)
