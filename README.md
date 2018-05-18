@@ -57,7 +57,3 @@ path should be the path from the root directory of the proyect to where the data
 ## Authors
 
 * **Juan Daniel Morales**
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
