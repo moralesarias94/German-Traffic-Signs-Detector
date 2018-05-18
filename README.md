@@ -21,6 +21,8 @@ python app.py download
 
 This may take a while but if you just want to test (not infer) the model with your own data, just save the images specifying the real class in the name of the image as the first two characters. e.g 14stopsign.png. You do not have to save the images in this way if you just want to run inference in the images. If you are going to use your own images for training and testing please follow the convention mentioned above. 00 for class 0 01 for class 1 and so on.
 
+TODO: Make the models see at least one time each class.
+
 To train the models run: 
 
 ```
