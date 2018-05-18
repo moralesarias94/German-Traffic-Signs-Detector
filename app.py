@@ -101,7 +101,6 @@ def infer(m, d):
         saver = tf.train.Saver()
 
         with tf.Session() as sess:
-            # Construct a linear model
             model = tf.nn.softmax(tf.matmul(x, W) + b) # Softmax
             user_forward = tf.argmax(model, 1)
             try:
@@ -124,7 +123,7 @@ def infer(m, d):
 @cli.command()
 def download():
     """This function downloads the training and test images 
-    from  from http://benchmark.ini.rub.de/Dataset_GTSDB/"""
+    from  from """
 
     data_sets_urls = {'test': 'http://benchmark.ini.rub.de/Dataset_GTSDB/TestIJCNN2013.zip',
                     'train': 'http://benchmark.ini.rub.de/Dataset_GTSDB/TrainIJCNN2013.zip',

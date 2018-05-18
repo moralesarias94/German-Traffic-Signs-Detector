@@ -23,7 +23,7 @@ def lr_model(k, c, d, kmeans=None):
     return train_score
 
 def lr_model_test(d, m='model1'):
-    """Loads both the kmeans model and the linear regression and predict the labels of the images contained in d directory"""
+    """Loads both the kmeans model and the logistic regression and predict the labels of the images contained in d directory"""
     test_features, test_classes, test_transformed_image_names = read_transform_all_images(d, False)
     try:
         kmeans = joblib.load(os.path.join(path_to_root, 'models/aux/kmeans.sav'))
@@ -227,20 +227,19 @@ def tf_lenet_model(x_data, y_data, mode='train', lr=0.001, n_epochs=100, batch_s
             init = tf.global_variables_initializer()
             sess.run(init)
             
-            #Training iterations
+            #Training epochs
             for epoch in range(n_epochs):
                 avg_cost = 0.
                 total_batch = int(len(x_data)/batch_size)
-                # Loop over all batches
+                # Loop over # of batches
                 for i in range(total_batch):
                     batch_xs, batch_ys = random_batch(x_data, y_data, batch_size)
                     # Fit training using batch data
                     sess.run(train, feed_dict={x: batch_xs, y_: batch_ys})
                     # Compute average loss
                     avg_cost += sess.run(loss, feed_dict={x: batch_xs, y_: batch_ys})/total_batch
-                    # TODO Implement early stopping, I just got the # of iterations with hypterparameter tunning when I wanted to stop
+                    # TODO Implement early stopping, I just got the # of epochs with hypterparameter tunning.
 
-                # Display logs per eiteration step
                 if ((epoch % 5 == 0) and verbose):
                     print ("Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f}".format(avg_cost))
 
