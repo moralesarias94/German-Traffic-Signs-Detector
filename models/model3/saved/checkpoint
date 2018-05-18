@@ -1,2 +1,2 @@
-model_checkpoint_path: "/Users/juandanielmorales/Desktop/Kiwi2/German-Traffic-Signs-Detector/models/model3/saved/model3.ckpt"
-all_model_checkpoint_paths: "/Users/juandanielmorales/Desktop/Kiwi2/German-Traffic-Signs-Detector/models/model3/saved/model3.ckpt"
+model_checkpoint_path: "/Users/jmoralesa/Desktop/test/German-Traffic-Signs-Detector/models/model3/saved/model3.ckpt"
+all_model_checkpoint_paths: "/Users/jmoralesa/Desktop/test/German-Traffic-Signs-Detector/models/model3/saved/model3.ckpt"

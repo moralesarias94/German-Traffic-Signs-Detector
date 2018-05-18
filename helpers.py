@@ -10,7 +10,7 @@ import cv2
 import matplotlib.pyplot as plt
 from shutil import copyfile
 from sklearn.preprocessing import OneHotEncoder
-import requests, zipfile, io, os
+import requests, zipfile, io, os, sys
 from sklearn.externals import joblib
 from sklearn.utils import shuffle
 

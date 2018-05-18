@@ -123,35 +123,63 @@ def infer(m, d):
 @cli.command()
 def download():
     """This function downloads the training and test images 
-    from  from """
+    from  http://benchmark.ini.rub.de/Dataset_GTSDB"""
 
     data_sets_urls = {'test': 'http://benchmark.ini.rub.de/Dataset_GTSDB/TestIJCNN2013.zip',
-                    'train': 'http://benchmark.ini.rub.de/Dataset_GTSDB/TrainIJCNN2013.zip',
-                    'full': 'http://benchmark.ini.rub.de/Dataset_GTSDB/FullIJCNN2013.zip'}
-    base_output_dir = '/images/'
+                        'train': 'http://benchmark.ini.rub.de/Dataset_GTSDB/TrainIJCNN2013.zip',
+                        'full': 'http://benchmark.ini.rub.de/Dataset_GTSDB/FullIJCNN2013.zip'}
+    base_output_dir = os.path.join(path_to_root, 'images/')
     url = data_sets_urls['full']
     output_full_dir = os.path.join(base_output_dir, 'full')
     full_files = os.listdir(output_full_dir)
-    if(len(full_files) == 0):
-        file_request = requests.get(url)
-        if(file_request.ok):
-            zip_data_set = zipfile.ZipFile(io.BytesIO(file_request.content))
-            for zip_info in zip_data_set.infolist():
-                filename = zip_info.filename
-                if((filename.count('/') > 1 and filename[-1] != '/')):
-                    zip_info.filename = os.path.split(os.path.dirname(filename))[1] + os.path.basename(filename)
-                    zip_data_set.extract(zip_info, output_full_dir)
-        else:
-            print('Error reading full files')
-    else:
-        print('Full files already downloaded')
+    full_files.remove('.gitignore')
+    full_files.remove('.DS_Store')
+    file_name = os.path.join(base_output_dir, "full.zip")
+    if(not os.path.exists(file_name)):
+        print("Downloading images from ", url, " to: ", output_full_dir)
+        
+        with open(file_name, "wb") as f:
+                print ("Downloading %s" % file_name)
+                response = requests.get(url, stream=True)
+                total_length = response.headers.get('content-length')
 
+                if total_length is None: # no content length header
+                    f.write(response.content)
+                else:
+                    dl = 0
+                    total_length = int(total_length)
+                    for data in response.iter_content(chunk_size=4096):
+                        dl += len(data)
+                        f.write(data)
+                        done = int(50 * dl / total_length)
+                        sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )    
+                        sys.stdout.flush()
+    if(len(full_files) == 0):
+        print('Unziping images into full folder.')
+        zip_data_set = zipfile.ZipFile(file_name, 'r')
+        for zip_info in zip_data_set.infolist():
+            filename = zip_info.filename
+            if((filename.count('/') > 1 and filename[-1] != '/')):
+                zip_info.filename = os.path.split(os.path.dirname(filename))[1] + os.path.basename(filename)
+                zip_data_set.extract(zip_info, output_full_dir)
+                
+    print('Realocating train and test images')
     full_files = os.listdir(output_full_dir)
+    full_files.remove('.gitignore')
+    full_files.remove('.DS_Store')
     all_file_names = pd.DataFrame(full_files)
     train, test = train_test_split(all_file_names, test_size=0.2)
     train_output_dir = os.path.join(base_output_dir, 'train')
     test_output_dir = os.path.join(base_output_dir, 'test')
-    if(len(os.listdir(train_output_dir)) == 0 and len(os.listdir(test_output_dir)) == 0):
+    train_output_dir_list = os.listdir(train_output_dir)
+    test_output_dir_list = os.listdir(test_output_dir)
+    #TODO: Find a better solution for this
+    train_output_dir_list.remove('.gitignore')
+    train_output_dir_list.remove('.DS_Store')
+    test_output_dir_list.remove('.gitignore')
+    test_output_dir_list.remove('.DS_Store')
+
+    if(len(train_output_dir_list) == 0 and len(test_output_dir_list) == 0):
         train[0].apply(lambda x: copyfile(os.path.join(output_full_dir, x), os.path.join(train_output_dir, x)))
         test[0].apply(lambda x: copyfile(os.path.join(output_full_dir, x), os.path.join(test_output_dir, x)))
     else:

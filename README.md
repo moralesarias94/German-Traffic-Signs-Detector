@@ -5,18 +5,10 @@ This project contains 3 different models performing  a classification task on da
 
 ### Prerequisites
 
-You should install requirements.txt. I used conda to install them in a new environment with python 3.5. 
+You should create a new conda environment from the environment.yml file.
 
 ```
-conda install requirements.txt
-```
-
-### Installing
-
-You should also install opencv V3 from menpo repo.
-
-```
-conda install -c menpo opencv3 
+conda env create -f environment.yml
 ```
 
 To download the data run: 
@@ -25,7 +17,7 @@ To download the data run:
 python app.py download
 ```
 
-This may take a while but if you just want to test (not infer) the model with your own data, just save the images specifying the real class in the name of the image. e.g 14stopsign.png. You do not have to save the images in this way if you just want to run inference in the images.  
+This may take a while but if you just want to test (not infer) the model with your own data, just save the images specifying the real class in the name of the image. e.g 14stopsign.png. You do not have to save the images in this way if you just want to run inference in the images. If you are going to use your own images for training and testing please follow the convention mentioned above. 00 for class 0 01 for class 1 and so on.
 
 To run training in the models run: 
 
