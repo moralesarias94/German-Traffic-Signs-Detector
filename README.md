@@ -11,6 +11,8 @@ You should create a new conda environment from the environment.yml file.
 conda env create -f environment.yml
 ```
 
+Then activate this new environment named kiwichallenge.
+
 To download the data run: 
 
 ```

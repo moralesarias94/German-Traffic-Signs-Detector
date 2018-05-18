@@ -77,6 +77,7 @@ def infer(m, d):
         preds = lr.predict(user_samples)
 
     elif(m == 'model2'):
+        #TODO: Create a function to wrap all this code. It is different to testing.
         user_features, _, user_transformed_image_names = read_transform_all_images('images/user', True)
         try:
             kmeans = joblib.load(os.path.join(path_to_root,'models/aux/kmeans_tf.sav'))
@@ -131,9 +132,7 @@ def download():
     base_output_dir = os.path.join(path_to_root, 'images/')
     url = data_sets_urls['full']
     output_full_dir = os.path.join(base_output_dir, 'full')
-    full_files = os.listdir(output_full_dir)
-    full_files.remove('.gitignore')
-    full_files.remove('.DS_Store')
+    full_files = [f for f in os.listdir(output_full_dir) if not f.startswith('.')]
     file_name = os.path.join(base_output_dir, "full.zip")
     if(not os.path.exists(file_name)):
         print("Downloading images from ", url, " to: ", output_full_dir)
@@ -164,21 +163,13 @@ def download():
                 zip_data_set.extract(zip_info, output_full_dir)
                 
     print('Realocating train and test images')
-    full_files = os.listdir(output_full_dir)
-    full_files.remove('.gitignore')
-    full_files.remove('.DS_Store')
+    full_files = [f for f in os.listdir(output_full_dir) if not f.startswith('.')]
     all_file_names = pd.DataFrame(full_files)
     train, test = train_test_split(all_file_names, test_size=0.2)
     train_output_dir = os.path.join(base_output_dir, 'train')
     test_output_dir = os.path.join(base_output_dir, 'test')
-    train_output_dir_list = os.listdir(train_output_dir)
-    test_output_dir_list = os.listdir(test_output_dir)
-    #TODO: Find a better solution for this
-    train_output_dir_list.remove('.gitignore')
-    train_output_dir_list.remove('.DS_Store')
-    test_output_dir_list.remove('.gitignore')
-    test_output_dir_list.remove('.DS_Store')
-
+    train_output_dir_list = [f for f in os.listdir(train_output_dir) if not f.startswith('.')]
+    test_output_dir_list = [f for f in os.listdir(test_output_dir) if not f.startswith('.')]
     if(len(train_output_dir_list) == 0 and len(test_output_dir_list) == 0):
         train[0].apply(lambda x: copyfile(os.path.join(output_full_dir, x), os.path.join(train_output_dir, x)))
         test[0].apply(lambda x: copyfile(os.path.join(output_full_dir, x), os.path.join(test_output_dir, x)))
